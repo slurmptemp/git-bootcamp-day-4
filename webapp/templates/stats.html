@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Notes — статистика{% endblock %}
+
+{% block content %}
+  <section class="stats">
+    <h1 class="stats__title">Статистика</h1>
+
+    <dl class="stats__list">
+      <div class="stats__row">
+        <dt>Всего заметок</dt>
+        <dd>{{ stats.total_notes }}</dd>
+      </div>
+      <div class="stats__row">
+        <dt>Уникальных тегов</dt>
+        <dd>{{ stats.total_tags }}</dd>
+      </div>
+      <div class="stats__row">
+        <dt>Средняя длина тела</dt>
+        <dd>{{ stats.avg_body_length }} символов</dd>
+      </div>
+    </dl>
+
+    <h2 class="stats__subtitle">Топ-теги</h2>
+    {% if stats.top_tags %}
+      <ol class="stats__top">
+        {% for name, count in stats.top_tags %}
+          <li><b>{{ name }}</b> — {{ count }}</li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <p class="empty">Тегов пока нет.</p>
+    {% endif %}
+  </section>
+{% endblock %}

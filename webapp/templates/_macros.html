@@ -1,0 +1,31 @@
+{% macro tag_badge(name) %}
+  <span class="tag-badge">#{{ name }}</span>
+{% endmacro %}
+
+{% macro note_card(note, matched_in=None, score=None) %}
+  <article class="note-card">
+    <header class="note-card__header">
+      <h3 class="note-card__title">
+        <a href="{{ url_for('notes.show_note', note_id=note.id) }}">{{ note.title }}</a>
+      </h3>
+      {% if matched_in %}
+        <span class="note-card__match" title="Совпадение по {{ matched_in }}, score={{ '%.2f' % score }}">
+          match: {{ matched_in }}
+        </span>
+      {% endif %}
+    </header>
+
+    {% if note.body %}
+      <p class="note-card__excerpt">{{ note.body[:160] }}{% if note.body|length > 160 %}…{% endif %}</p>
+    {% endif %}
+
+    <footer class="note-card__footer">
+      {% if note.tags %}
+        <span class="note-card__tags">
+          {% for tag in note.tags %}{{ tag_badge(tag) }}{% endfor %}
+        </span>
+      {% endif %}
+      <span class="note-card__date">{{ note.created_at }}</span>
+    </footer>
+  </article>
+{% endmacro %}

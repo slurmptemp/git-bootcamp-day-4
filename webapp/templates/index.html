@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import note_card, tag_badge %}
+
+{% block title %}Notes — список заметок{% endblock %}
+
+{% block content %}
+  <section class="search">
+    <form method="get" action="{{ url_for('notes.index') }}" class="search__form">
+      <input
+        type="search"
+        name="q"
+        value="{{ query }}"
+        placeholder="Поиск по заголовку, телу или тегу…"
+        class="search__input"
+      >
+      <button type="submit" class="search__submit">Искать</button>
+    </form>
+
+    {% if query %}
+      <p class="search__summary">
+        Найдено заметок по запросу «{{ query }}»: <b>{{ hits|length }}</b>.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="composer">
+    <h2 class="composer__title">Новая заметка</h2>
+    <form method="post" action="{{ url_for('notes.create_note') }}" class="composer__form">
+      <input name="title" placeholder="Заголовок" required class="composer__title-input">
+      <textarea name="body" placeholder="Текст заметки…" rows="3" class="composer__body"></textarea>
+      <input name="tags" placeholder="Теги через запятую: idea, todo, work" class="composer__tags">
+      <button type="submit" class="composer__submit">Сохранить</button>
+    </form>
+  </section>
+
+  <section class="notes-list">
+    <h2 class="notes-list__title">
+      {% if query %}Результаты поиска{% else %}Все заметки{% endif %}
+    </h2>
+
+    {% if query %}
+      {% if hits %}
+        <ul class="notes-list__items">
+          {% for hit in hits %}
+            <li class="notes-list__item">
+              {{ note_card(hit.note, matched_in=hit.matched_in, score=hit.score) }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">Ничего не нашлось. Попробуйте другой запрос или создайте новую заметку.</p>
+      {% endif %}
+    {% else %}
+      {% if notes %}
+        <ul class="notes-list__items">
+          {% for note in notes %}
+            <li class="notes-list__item">
+              {{ note_card(note) }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty">Заметок пока нет. Создайте первую через форму выше.</p>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import tag_badge %}
+
+{% block title %}Notes — {{ note.title }}{% endblock %}
+
+{% block content %}
+  <article class="note-page">
+    <header class="note-page__header">
+      <h1 class="note-page__title">{{ note.title }}</h1>
+      <p class="note-page__meta">
+        Создана {{ note.created_at }} · обновлена {{ note.updated_at }}
+      </p>
+      {% if note.tags %}
+        <p class="note-page__tags">
+          {% for tag in note.tags %}{{ tag_badge(tag) }}{% endfor %}
+        </p>
+      {% endif %}
+    </header>
+
+    <section class="note-page__body">
+      {% if note.body %}
+        <pre class="note-page__pre">{{ note.body }}</pre>
+      {% else %}
+        <p class="empty">Тело заметки пустое.</p>
+      {% endif %}
+    </section>
+
+    <footer class="note-page__footer">
+      <a href="{{ url_for('notes.index') }}" class="link">← Все заметки</a>
+
+      <form method="post" action="{{ url_for('notes.delete_note', note_id=note.id) }}" class="note-page__delete">
+        <button type="submit" class="button button--danger">Удалить заметку</button>
+      </form>
+    </footer>
+  </article>
+{% endblock %}

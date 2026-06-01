@@ -1,0 +1,13 @@
+services:
+  web:
+    build: .
+    container_name: webapp-notes
+    ports:
+      - "8000:8000"
+    environment:
+      WEBAPP_ENV: production
+      WEBAPP_DATABASE_PATH: /app/data/notes.db
+      WEBAPP_SECRET_KEY: change-me-in-production
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
