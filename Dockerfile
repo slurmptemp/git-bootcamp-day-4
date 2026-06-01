@@ -16,4 +16,8 @@ RUN mkdir -p /app/data
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "30", "webapp:create_app()"]
+RUN useradd --no-create-home --uid 10001 webapp \
+    && chown -R webapp:webapp /app
+USER webapp
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "10", "--access-logfile", "-", "webapp:create_app()"]

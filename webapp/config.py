@@ -41,11 +41,11 @@ class DatabaseSection:
 
 @dataclass
 class PerformanceSection:
-    REQUEST_TIMEOUT_SEC: int = 30
-    DB_POOL_SIZE: int = 5
-    SEARCH_RESULTS_LIMIT: int = 50
-    CACHE_TTL_SEC: int = 60
-    GUNICORN_WORKERS: int = 2
+    REQUEST_TIMEOUT_SEC: int = 10
+    DB_POOL_SIZE: int = 3
+    SEARCH_RESULTS_LIMIT: int = 25
+    CACHE_TTL_SEC: int = 30
+    GUNICORN_WORKERS: int = 3
 
 
 # ---------------------------------------------------------------------------

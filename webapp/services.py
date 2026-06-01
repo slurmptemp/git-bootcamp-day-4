@@ -26,11 +26,12 @@ class Stats:
     avg_body_length: float
 
 
-def search_notes(query: str, limit: int = 50) -> list[SearchHit]:
-    """Найти заметки, у которых в title/body/tag встречается подстрока query.
+def search_notes(query: str, limit: int = 25) -> list[SearchHit]:
+    """Поиск под продакшен: точный scoring, приоритет тегов перед телом.
 
-    Алгоритм простой — учебный. Реальный поиск делается через FTS, но цель файла —
-    дать осязаемый кусок логики, который удобно править в учебных конфликтах.
+    На небольшой выдаче (limit=25) важна релевантность: точное совпадение по
+    тегу — 1.0, начало title — 0.95, подстрока в title — 0.7, тело — 0.4 с
+    бонусом за частоту, но не выше 0.6.
     """
     query_norm = (query or "").strip().lower()
     if not query_norm:
@@ -43,18 +44,18 @@ def search_notes(query: str, limit: int = 50) -> list[SearchHit]:
         body_l = note.body.lower()
         tags_l = [t.lower() for t in note.tags]
 
-        if query_norm in title_l:
-            score = 1.0 + (1.0 if title_l.startswith(query_norm) else 0.0)
-            hits.append(SearchHit(note=note, score=score, matched_in="title"))
-            continue
-
         if any(query_norm == tag for tag in tags_l):
-            hits.append(SearchHit(note=note, score=0.9, matched_in="tag"))
+            hits.append(SearchHit(note=note, score=1.0, matched_in="tag"))
             continue
-
+        if title_l.startswith(query_norm):
+            hits.append(SearchHit(note=note, score=0.95, matched_in="title"))
+            continue
+        if query_norm in title_l:
+            hits.append(SearchHit(note=note, score=0.7, matched_in="title"))
+            continue
         if query_norm in body_l:
             occurrences = body_l.count(query_norm)
-            score = 0.5 + min(0.4, 0.1 * occurrences)
+            score = min(0.6, 0.4 + 0.05 * occurrences)
             hits.append(SearchHit(note=note, score=score, matched_in="body"))
 
     hits.sort(key=lambda h: h.score, reverse=True)
