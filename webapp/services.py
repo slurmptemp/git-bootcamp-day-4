@@ -37,7 +37,7 @@ def search_notes(query: str, limit: int = 25) -> list[SearchHit]:
     if not query_norm:
         return []
 
-    notes = models.list_notes(limit=500)
+    notes = models.list_notes(limit=2000)
     hits: list[SearchHit] = []
     for note in notes:
         title_l = note.title.lower()

@@ -19,7 +19,7 @@
         type="search"
         name="q"
         value="{{ query }}"
-        placeholder="Поиск по заголовку, телу или тегу…"
+        placeholder="Поиск (perf mode)…"
         class="search__input"
       >
       <button type="submit" class="search__submit">Искать</button>
@@ -27,7 +27,7 @@
 
     {% if query %}
       <p class="search__summary">
-        Найдено заметок по запросу «{{ query }}»: <b>{{ hits|length }}</b>.
+        Perf-режим. Найдено: <b>{{ hits|length }}</b> (лимит 200).
       </p>
     {% endif %}
   </section>

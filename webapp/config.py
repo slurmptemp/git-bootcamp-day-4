@@ -41,7 +41,7 @@ class DatabaseSection:
 
 @dataclass
 class PerformanceSection:
-    REQUEST_TIMEOUT_SEC: int = 12
+    REQUEST_TIMEOUT_SEC: int = 10
     DB_POOL_SIZE: int = 3
     SEARCH_RESULTS_LIMIT: int = 25
     CACHE_TTL_SEC: int = 30
