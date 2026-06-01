@@ -16,4 +16,4 @@ RUN mkdir -p /app/data
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--timeout", "30", "webapp:create_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "8", "--timeout", "120", "--graceful-timeout", "30", "webapp:create_app()"]

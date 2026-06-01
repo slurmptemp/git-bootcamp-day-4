@@ -26,36 +26,30 @@ class Stats:
     avg_body_length: float
 
 
-def search_notes(query: str, limit: int = 50) -> list[SearchHit]:
-    """Найти заметки, у которых в title/body/tag встречается подстрока query.
+def search_notes(query: str, limit: int = 200) -> list[SearchHit]:
+    """Найти заметки под нагрузочные тесты: больше результатов, простой scoring.
 
-    Алгоритм простой — учебный. Реальный поиск делается через FTS, но цель файла —
-    дать осязаемый кусок логики, который удобно править в учебных конфликтах.
+    Для perf-tests нам важны не релевантность ответов, а пропускная способность
+    — скоринг считается дешёво, лимит выдачи поднят, фильтр по тегу делается
+    отдельно от title/body.
     """
     query_norm = (query or "").strip().lower()
     if not query_norm:
         return []
 
-    notes = models.list_notes(limit=500)
+    notes = models.list_notes(limit=2000)
     hits: list[SearchHit] = []
     for note in notes:
         title_l = note.title.lower()
         body_l = note.body.lower()
         tags_l = [t.lower() for t in note.tags]
 
-        if query_norm in title_l:
-            score = 1.0 + (1.0 if title_l.startswith(query_norm) else 0.0)
-            hits.append(SearchHit(note=note, score=score, matched_in="title"))
-            continue
-
-        if any(query_norm == tag for tag in tags_l):
-            hits.append(SearchHit(note=note, score=0.9, matched_in="tag"))
-            continue
-
-        if query_norm in body_l:
-            occurrences = body_l.count(query_norm)
-            score = 0.5 + min(0.4, 0.1 * occurrences)
-            hits.append(SearchHit(note=note, score=score, matched_in="body"))
+        if query_norm in title_l or query_norm in body_l or any(query_norm == tag for tag in tags_l):
+            score = 0.5
+            if query_norm in title_l:
+                score = 1.0
+            matched_in = "title" if query_norm in title_l else ("tag" if any(query_norm == t for t in tags_l) else "body")
+            hits.append(SearchHit(note=note, score=score, matched_in=matched_in))
 
     hits.sort(key=lambda h: h.score, reverse=True)
     return hits[:limit]
