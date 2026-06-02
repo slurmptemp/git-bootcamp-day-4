@@ -1,7 +1,5 @@
 # LAB — день 4
 
-> Это шаблон отчёта. Скопируйте его в `LAB.md` в корне вашего репозитория с ДЗ и заполните по ходу работы. Достаточно осмысленных заголовков, code-блоков с языком и ссылок на скриншоты.
-
 Курс: [«Интенсив по погружению в GIT»](https://slurm.io/git-intensive)
 
 
@@ -9,20 +7,56 @@
 
 ### Стартовое состояние
 
-[FIXME: Что было сделано перед началом разрешения конфликтов: ветка `feat/perf-tuning`, какие файлы изменены и зачем; встречный коммит на `main`. Кратко, своими словами.]
+На ветке `feat/perf-tuning`: вносили правки для подготовки проекта к тестам производительности — увеличивали таймауты, пул соединений, поднимали число воркеров gunicorn, расширяли лимит выдачи поиска, меняли блок поиска в шапке страницы и оптимизировали Dockerfile под нагрузку.
+
+---
+
+На ветке `main`: делали hardening для продакшена — понижение таймаутов и лимитов до консервативных, добавляли welcome-баннер на главной, ужесточали настройка безопасности в Dockerfile (запуск под non-root, явные таймауты gunicorn под short response).
+
+---
+
+Правки в:
+- webapp/config.py — секция PerformanceSection;
+- webapp/services.py — функция search_notes (логика scoring и лимиты);
+- webapp/templates/index.html — блок над списком заметок;
+- Dockerfile — CMD запуска gunicorn.
 
 ```bash
 # git log --oneline --graph --all (на момент окончания подготовки)
+* 1cdf369 (HEAD -> main) fix(prod): tighten timeouts, harden Dockerfile, add welcome banner
+| * 59555c5 (origin/feat/perf-tuning, feat/perf-tuning) feat(perf): tune timeouts, pools, workers for perf testing
+|/  
+* 0d250eb (origin/main) Initial commit: webapp-notes starter
 ```
 
 ![Шаги до конфликта](screenshots/01-pre-merge-history.png)
 
 ### Путь A — через `merge`
 
-[FIXME:Что сделано на ветке `experiment/merge`, какой файл и через что разрешали (CLI или VS Code Merge Editor). Какие компромиссы выбрали и почему.]
+На ветке `experiment/merge`, выбран `hardening` вариант через `VS Code` ( `был добавлен лишний коммит bda8d1c, к заданию не относится, таймаут там по факту не lower, а наоборот.` ).
 
 ```bash
-# ключевые команды
+# git --no-pager merge feat/perf-tuning
+Auto-merging Dockerfile
+CONFLICT (content): Merge conflict in Dockerfile
+Auto-merging webapp/config.py
+CONFLICT (content): Merge conflict in webapp/config.py
+Auto-merging webapp/services.py
+CONFLICT (content): Merge conflict in webapp/services.py
+Auto-merging webapp/templates/index.html
+CONFLICT (content): Merge conflict in webapp/templates/index.html
+Automatic merge failed; fix conflicts and then commit the result.
+
+
+# git --no-pager lg          
+*   5bf20fd (HEAD -> experiment/merge) Merge branch 'feat/perf-tuning' into experiment/merge
+|\  
+| * 59555c5 (origin/feat/perf-tuning, feat/perf-tuning) feat(perf): tune timeouts, pools, workers for perf testing
+* | bda8d1c feat(config): lower request timeout
+* | 1cdf369 (origin/main, main) fix(prod): tighten timeouts, harden Dockerfile, add welcome banner
+|/  
+* 0d250eb Initial commit: webapp-notes starter
+
 ```
 
 ![Состояние Merge Editor / CLI на момент конфликта](screenshots/02-merge-conflict.png)
@@ -31,10 +65,36 @@
 
 ### Путь B — через `rebase`
 
-[FIXME:Что сделано на ветке `experiment/rebase`. На какие коммиты конфликты пришлись и как их разрешали. Чем поведение отличалось от пути A.]
+На ветке `experiment/rebase` , также выбран `hardening` вариант через `VS Code` ( но `REQUEST_TIMEOUT_SEC` установлен в 7 ).
 
 ```bash
-# ключевые команды
+# git rebase main
+Auto-merging Dockerfile
+CONFLICT (content): Merge conflict in Dockerfile
+Auto-merging webapp/config.py
+CONFLICT (content): Merge conflict in webapp/config.py
+Auto-merging webapp/services.py
+CONFLICT (content): Merge conflict in webapp/services.py
+Auto-merging webapp/templates/index.html
+CONFLICT (content): Merge conflict in webapp/templates/index.html
+error: could not apply 59555c5... feat(perf): tune timeouts, pools, workers for perf testing
+hint: Resolve all conflicts manually, mark them as resolved with
+hint: "git add/rm <conflicted_files>", then run "git rebase --continue".
+hint: You can instead skip this commit: run "git rebase --skip".
+hint: To abort and get back to the state before "git rebase", run "git rebase --abort".
+Could not apply 59555c5... feat(perf): tune timeouts, pools, workers for perf testing
+
+
+# git --no-pager lg
+* bbc31c4 (origin/experiment/rebase, experiment/rebase) feat(perf): tune timeouts, pools, workers for perf testing
+| *   5bf20fd (HEAD -> experiment/merge, origin/experiment/merge) Merge branch 'feat/perf-tuning' into experiment/merge
+| |\  
+| | * 59555c5 (origin/feat/perf-tuning, feat/perf-tuning) feat(perf): tune timeouts, pools, workers for perf testing
+| * | bda8d1c feat(config): lower request timeout
+|/ /  
+* / 1cdf369 (origin/main, main) fix(prod): tighten timeouts, harden Dockerfile, add welcome banner
+|/  
+* 0d250eb Initial commit: webapp-notes starter
 ```
 
 ![История после rebase](screenshots/04-rebase-result.png)
@@ -45,41 +105,43 @@
 
 ![Сравнение историй experiment/merge vs experiment/rebase](screenshots/05-history-comparison.png)
 
-[FIXME: Что я заметил(а) в процессе сравнения (например):
-- размер истории —
-- наличие/отсутствие merge-коммита —
-- хеши коммитов фичи —
-- видна ли в истории ветка как сущность —
-]
+В процессе сравнения (например):
+
+|Ветка|Историия|Хэши Коммитов|Видимость Ветки в истории|
+|-|-|-|-|
+|**experiment/merge**|С ветвлением. N-commits+merge-commit|не меняются|V|
+|**experiment/rebase**|Линейная. N-commits|меняются|X|
 
 ### Какой подход я бы выбрал(а) в команде и почему
 
-[FIXME: Свободный ,например: для слияния готовой фичи в общий `main` через PR — `merge` (или `merge --no-ff`); для обновления **своей** приватной ветки от свежего `main` перед PR — `rebase`. Подкрепите свой выбор тем, что увидели в этом задании.]
+`Merge`  - например, для `Merge Request` в `master`/`main`, командная работа, явная видимость того что правки велись в отдельной ветке.
+`Rebase` - локальная работа в своей ветке, чтобы "подтянуть убежавшие вперед" коммиты, сохранения линейности истории.
 
-## Задания со звездочкой (опционально)
-> это заполняете только если делали. иначе не включайте в отчет и удалите их шаблона
-
-### ⭐1 — `git pull` vs `git pull --rebase`
-
-Что было воспроизведено, какая разница в истории получилась, какую глобальную настройку поставили в `~/.gitconfig`.
-
-![Состояние истории до/после pull --rebase](screenshots/star-1-pull-rebase.png)
-
-### ⭐2 — `--force-with-lease` vs `--force`
-
-Что было сделано (`git commit --amend` после push), почему обычный `git push` отказал, чем `--force-with-lease` безопаснее `--force`.
-
-![Push --force-with-lease успех](screenshots/star-2-force-with-lease.png)
-
-### ⭐3 — rebase с конфликтом на каждом коммите
-
-Сюжет, через сколько `--continue` прошли, что почувствовали по сравнению с пассивным merge.
-
-![Финал rebase --continue](screenshots/star-3-multi-conflict.png)
-
-### ⭐4 — безопасный выход из detached HEAD
-
-Как зашли в detached HEAD, какой коммит сделали, как выходили через `git switch -c`, чем `git reflog` помог как страховка.
-
-![Выход из detached HEAD](screenshots/star-4-detached-head.png)
-
+В примере c `merge` мы получили нелинейную историю
+```bash
+# git --no-pager log --decorate --oneline --graph experiment/merge 
+*   5bf20fd (HEAD -> experiment/merge, origin/experiment/merge) Merge branch 'feat/perf-tuning' into experiment/merge
+|\  
+| * 59555c5 (origin/feat/perf-tuning, feat/perf-tuning) feat(perf): tune timeouts, pools, workers for perf testing
+* | bda8d1c feat(config): lower request timeout
+* | 1cdf369 (origin/main, main) fix(prod): tighten timeouts, harden Dockerfile, add welcome banner
+|/  
+* 0d250eb Initial commit: webapp-notes starter
+```
+с `rebase` наоборот
+```bash
+# git --no-pager log --decorate --oneline --graph experiment/rebase
+* bbc31c4 (origin/experiment/rebase, experiment/rebase) feat(perf): tune timeouts, pools, workers for perf testing
+* 1cdf369 (origin/main, main) fix(prod): tighten timeouts, harden Dockerfile, add welcome banner
+* 0d250eb Initial commit: webapp-notes starter
+```
+`rebase` не содержит "лишнего" merge-коммит.
+```bash
+# git --no-pager log --merges --oneline experiment/rebase
+#
+```
+`merge` наоборот
+```
+# git --no-pager log --merges --oneline experiment/merge 
+5bf20fd (HEAD -> experiment/merge, origin/experiment/merge) Merge branch 'feat/perf-tuning' into experiment/merge
+```
